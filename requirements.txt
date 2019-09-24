@@ -1,0 +1,12 @@
+# conda create -n clustering pip python scikit-image pandas seaborn numpy matplotlib scikit-learn scipy
+# activate clustering
+# conda install -c michael_wild opencv-contrib
+pip
+python
+scikit-image
+pandas
+seaborn
+numpy
+matplotlib
+scikit-learn
+scipy

@@ -1,0 +1,1 @@
+copepod,other,faecal_pellets,fish_egg,bubble,diatom_chain
