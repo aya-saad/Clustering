@@ -13,7 +13,13 @@ import cv2
 from skimage import feature
 
 class Descriptor:
+
     def __init__(self, name, image):
+        '''
+        Class Descriptor constructor
+        :param name:    Name of the Algorithm/model
+        :param image:   Name of the image
+        '''
         self.name = name
         self.image = image
 
