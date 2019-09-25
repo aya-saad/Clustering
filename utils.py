@@ -1,3 +1,14 @@
+#################################################################################################################
+# A Modularized implementation for
+# Image enhancement, extracting descriptors, clustering, evaluation and visualization
+# Integrating all the algorithms stated above in one framework
+# CONFIGURATION - LOAD_DATA - IMAGE_ENHANCEMENTS - IMAGE_DESCRIPTORS - CLUSTERING - EVALUATION_VISUALIZATION
+# Implementation of the utils
+# Author: Aya Saad
+# Date created: 24 September 2019
+#
+#################################################################################################################
+
 import os
 
 def str2bool(v):
