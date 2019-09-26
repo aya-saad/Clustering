@@ -5,6 +5,8 @@
 # CONFIGURATION - LOAD_DATA - IMAGE_ENHANCEMENTS - IMAGE_DESCRIPTORS - CLUSTERING - EVALUATION_VISUALIZATION
 # Author: Aya Saad
 # Date created: 24 September 2019
+# Project: AILARON
+# funded by RCN FRINATEK IKTPLUSS program (project number 262701) and supported by NTNU AMOS
 #
 #################################################################################################################
 import numpy as np
@@ -16,7 +18,7 @@ from skimage import exposure
 
 import cv2
 from image import Image
-from clusterAlg import ClusterAlgorithm
+from clusterAlg import KNearestClustering, KMeansClustering
 
 def main(config):
     np.random.seed(config.random_seed)
@@ -47,8 +49,10 @@ def main(config):
 
     # "train" the nearest neighbors classifier
     print("[INFO] training classifier...")
-    classifier = ClusterAlgorithm('k-nearest', train_x=data, train_y=train_y)
-    classifier.train()
+    classifier = KNearestClustering()
+    #classifier = KMeansClustering()
+    classifier.build_model()
+    classifier.train(train_x=data, train_y=train_y)
 
     print("[INFO] evaluating...")
     X_test = []
@@ -65,7 +69,7 @@ def main(config):
         hogImage = hogImage.astype("uint8")
         cv2.imshow("HOG Image #{}".format(i + 1), hogImage)
 
-    predict = classifier.evaluate(test_x=X_test)
+    predict = classifier.predict(test_x=X_test)
     print(test_x)
     y_test = []
     y_pred = []

@@ -11,38 +11,27 @@
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import metrics
+from sklearn.cluster import KMeans
 
 class ClusterAlgorithm:
-    def __init__(self, name, train_x, train_y):
-        '''
-        ClusterAlgorithm constructor
-        :param name:      Name of the Algorithm/model
-        :param train_x:   Input train set
-        :param train_y:   Labeled output of the train set
-        '''
-        self.name = name
-        self.model = self.build_model()
-        self.train_x = train_x
-        self.train_y = train_y
+    model = None
 
-
-
-    def train(self):
+    def train(self, train_x, train_y):
         # Train the model
-        self.model.fit(self.train_x, self.train_y)
+        self.model.fit(train_x, train_y)
 
-    def evaluate(self, test_x):
+    def predict(self, test_x):
         '''
-        Evaluate the model
+        Predict labels for the given test set
         :param test_x:   Input test set
         :return: predictions
         '''
         print('[INFO] ... Evaluate .... ')
-        predict = []
+        predictions = []
         for x in test_x:
             pred = self.model.predict(x)
-            predict.append(pred)
-        return predict
+            predictions.append(pred)
+        return predictions
 
     def performance(self, test_y, pred_y):
         '''
@@ -65,15 +54,14 @@ class ClusterAlgorithm:
 
 
     def build_model(self):
-        '''
-        Build the model
-        :return: model
-        '''
-        if self.name == 'k-nearest':
-            return self._KNearest()
+        pass
 
+    pass
 
-    def _KNearest(self, n_neighbors=1):
+class KNearestClustering(ClusterAlgorithm):
+    n_neighbors = 2
+
+    def build_model(self):
         '''
         The k-nearest neighbor classifier is a “lazy learning” algorithm where nothing is actually “learned”.
         Instead, the k-Nearest Neighbor (k-NN) training phase simply accepts a set of feature vectors and labels and stores them
@@ -83,8 +71,26 @@ class ClusterAlgorithm:
         - sorts them by distance
         - returns the top k “neighbors” to the input feature vector.
         Each of the k neighbors vote as to what they think the label of the classification is.
-        '''
-        return KNeighborsClassifier(n_neighbors=n_neighbors)
 
+        Build the model
+        :return: model
+        '''
+        self.model = KNeighborsClassifier(n_neighbors=self.n_neighbors)
+
+    pass
+
+
+class KMeansClustering(ClusterAlgorithm):
+    n_clusters = 6
+    n_init = 20
+
+    def build_model(self):
+        '''
+        Build the model
+        :return: model
+        '''
+        self.model = KMeans(n_clusters=self.n_clusters, n_init=self.n_init)
+
+    pass
 
 
