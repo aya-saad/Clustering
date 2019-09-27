@@ -5,7 +5,8 @@ A Modularized implementation for
 Image enhancement, extracting descriptors, clustering, evaluation and visualization
 Integrating all the algorithms stated above in one framework
 
-![Image description](./images/clusteringframework.png)
+<img src="images/clusteringframework.png" width="500">
+
 ---------------------------------------------------
 ###Installation
 ##### Create a conda environment
