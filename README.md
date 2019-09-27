@@ -8,6 +8,7 @@ Integrating all the algorithms stated above in one framework
 <img src="images/clusteringframework.png" width="500">
 
 ---------------------------------------------------
+
 ###Installation
 ##### Create a conda environment
 conda create -n <environment name> pip python scikit-image pandas seaborn numpy matplotlib scikit-learn scipy
