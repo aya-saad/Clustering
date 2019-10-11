@@ -12,6 +12,7 @@
 import os
 import csv
 import pandas as pd
+import numpy as np
 
 class Dataset:
     def __init__(self, data_dir, header_file, filename):
@@ -43,6 +44,7 @@ class Dataset:
         Read the data file and get the list of images along with their labels
         :return the data set
         '''
+
         input_data = pd.read_csv(os.path.join(self.data_dir, self.filename), header=None, delimiter=' ')
         print(input_data.head())
         return input_data
@@ -60,3 +62,31 @@ class Dataset:
         train_y, test_y = y[:split_size], y[split_size:]
 
         return train_x, train_y, test_x, test_y
+'''
+    def gen_dataset(self, X):
+        temp = []
+        for img_name in X.iloc[:, 0]:
+            #img = imread(img_name)  # , flatten=True
+            #img = Image.open(img_name)
+            img = img.resize((64, 64), resample=Image.NEAREST)
+            img = np.float64(img) / np.max(img)
+            img = img.astype('float32')
+            # print('image: {} {}', img_name, np.shape(img))
+            temp.append(img)
+
+        X = np.stack(temp)
+
+        X /= 255.0
+        # X = X.reshape(-1, 784).astype('float32')
+        x_size = len(X.iloc[:, 0])
+        print('x_size ', x_size)
+        X = X.reshape(x_size, -1).astype('float32')
+        print('X.shape ', X.shape)
+        y = X.iloc[:, 1]
+        split_size = int(y.shape[0] * 0.7)
+        print('split_size ', split_size)
+        train_x, test_x = X[:split_size], X[split_size:]
+        train_y, test_y = y[:split_size], y[split_size:]
+        return train_x, train_y, test_x, test_y
+
+'''

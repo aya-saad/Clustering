@@ -18,7 +18,7 @@ from skimage import exposure
 
 import cv2
 from image import Image
-from clusterAlg import KNearestClustering, KMeansClustering
+from clusterAlg import *
 
 def main(config):
     np.random.seed(config.random_seed)
@@ -26,61 +26,48 @@ def main(config):
     header_file = config.data_dir + '/header.tfl.txt'
     filename = 'image_set.dat'
     dataset = Dataset(config.data_dir, header_file, filename)
+    input_data = dataset.get_data()
 
     # Dataset retrieval
     cl = dataset.get_classes()
-    train_x, train_y, test_x, test_y = dataset.split_data()
-
-    print('output_dir: ', config.output_dir)
-    print('data_dir: ', config.data_dir)
-    print('classes:', cl)
-    print('train_x.shape: ', train_x.shape)
-    print('train_y.shape: ', train_y.shape)
-    print('test_x.shape: ', test_x.shape)
-    print('test_y.shape: ', test_y.shape)
 
     # Get image descriptor
     data = []
-    for x in train_x:
+    temp = []
+    for x in input_data.iloc[:, 0]:
         print(x)
         image = Image(x).image_read(resize=True)
-        _, fd, _ = Descriptor('HOG', image).algorithm('HOG')
+        img = np.float64(image) / np.max(image)
+        img = img.astype('float32')
+        temp.append(img)
+        _, _, fd = Descriptor('HOG', image).algorithm('HOG')
         data.append(fd)
 
-    # "train" the nearest neighbors classifier
-    print("[INFO] training classifier...")
-    classifier = KNearestClustering()
-    #classifier = KMeansClustering()
-    classifier.build_model()
-    classifier.train(train_x=data, train_y=train_y)
+    X = np.stack(temp)
+    X /= 255.0
+    x_size = len(input_data)
+    X = X.reshape(x_size, -1).astype('float32')
 
-    print("[INFO] evaluating...")
-    X_test = []
-    for (i,x) in enumerate(test_x):
-        print(x)
-        image = Image(x).image_read(resize=True)
-        image, fd, hogImage = Descriptor('HOG', image).algorithm('HOG')
-        X_test.append(fd.reshape(1,-1))
-        #pred = model.predict(fd.reshape(1,-1))[0]
-        #print('i, Predicted: ',i, pred, x, cl[pred-1], cl[test_y.iloc[i]-1])
+    X_hog = np.stack(data)
+    X_hog = X_hog.reshape(x_size, -1).astype('float32')
 
-        # visualize the HOG image
-        hogImage = exposure.rescale_intensity(hogImage, out_range=(0, 255))
-        hogImage = hogImage.astype("uint8")
-        cv2.imshow("HOG Image #{}".format(i + 1), hogImage)
+    print(X.shape)
 
-    predict = classifier.predict(test_x=X_test)
-    print(test_x)
-    y_test = []
-    y_pred = []
-    for (i,pred) in enumerate(predict):
-        print('i, Predicted: ', i, pred[0], cl[pred[0] - 1], cl[test_y.iloc[i] - 1], test_x.iloc[i])
-        y_test.append(test_y.iloc[i])
-        y_pred.append(pred[0])
-    print(y_test)
-    print(y_pred)
 
-    classifier.performance(y_test,y_pred)
+    # Hierarchical Clustering
+    labels = HierarchicalClustering().draw_dendogram(X)
+    #labels = MeanShiftAlgo().meanshift_fit(X)
+    PrincipleComponentAnalysis().pca_fit(labels,X)
+    TSNEAlgo().tsne_fit(X, input_data, labels)
+
+
+    labels_hog = HierarchicalClustering().draw_dendogram(X_hog)
+    #labels = MeanShiftAlgo().meanshift_fit(X_hog)
+    PrincipleComponentAnalysis().pca_fit(labels_hog, X_hog)
+    TSNEAlgo().tsne_fit(X_hog, input_data, labels_hog)
+
+
+
 
 
     return

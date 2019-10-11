@@ -8,10 +8,32 @@
 # Date created: 24 September 2019
 #
 #################################################################################################################
+from utils import fashion_scatter, color_list, tile_scatter
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import metrics
 from sklearn.cluster import KMeans
+
+from sklearn.decomposition import PCA
+from time import time
+import pandas as pd
+
+from sklearn.manifold import TSNE
+
+## Hierarchical Clustering
+from matplotlib import pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage, cophenet, fcluster
+from scipy.spatial.distance import pdist
+
+from sklearn.cluster import MeanShift, AgglomerativeClustering
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+import numpy as np
+
+# some settings
+np.set_printoptions(precision=5, suppress=True)  # suppress scientific float notation
+
 
 class ClusterAlgorithm:
     model = None
@@ -92,5 +114,159 @@ class KMeansClustering(ClusterAlgorithm):
         self.model = KMeans(n_clusters=self.n_clusters, n_init=self.n_init)
 
     pass
+
+
+class MeanShiftAlgo():
+    def meanshift_fit(self, X):
+        ms = MeanShift()
+        ms.fit(X)
+
+        colors = 10 * color_list
+
+        labels = ms.labels_
+        cluster_centers = ms.cluster_centers_
+        n_clusters_ = len(np.unique(labels))
+        print('Number of estimated clusters from the MeanShift: ', n_clusters_)
+        print(type(labels))
+        print(labels)
+
+        print(cluster_centers)
+        for i in range(len(X)):
+            plt.plot(X[i][0], X[i][1], c=colors[labels[i]], markersize=10)
+        plt.scatter(cluster_centers[:, 0], cluster_centers[:, 1],
+                    marker='x', s=150, linewidths=5, zorder=10)
+        plt.title('MeanShift Clustering ')
+        plt.show()
+        return labels
+
+class PrincipleComponentAnalysis():
+    def pca_fit(self, labels, X):
+        time_start = time()
+
+        x = StandardScaler().fit_transform(X)
+        pca = PCA(n_components=10)
+        principalComponents = pca.fit_transform(x)
+        print('-- PCA DONE! Time elapsed. {} seconds'.format(time() - time_start))
+        principalDf = pd.DataFrame(data=principalComponents
+                                   , columns=['pca1', 'pca2', 'pca3', 'pca4', 'pca5', 'pca6', 'pca7', 'pca8', 'pca9',
+                                              'pca10'])
+
+        print(pca.explained_variance_ratio_)
+        print(sum(pca.explained_variance_ratio_) * 100)
+        top_two_comp = principalDf[['pca1', 'pca2']]
+        print('top_two_comp.values', top_two_comp.values, 'labels' ,labels)
+        f_pca, ax_pca, _, _ = fashion_scatter(top_two_comp.values, labels)
+        ax_pca.set_xlabel('Principal Component 1', fontsize=10)
+        ax_pca.set_ylabel('Principal Component 2', fontsize=10)
+        ax_pca.set_title('2 Component PCA', fontsize=10)
+        f_pca.show()
+
+        return
+
+
+class TSNEAlgo():
+    def tsne_fit(self, X, input_data, labels):
+        x = StandardScaler().fit_transform(X)
+        time_start = time()
+        RS = 123
+        tsne = TSNE(random_state=RS).fit_transform(x)
+
+        print('-- TSNE DONE! Time elapsed: {} seconds'.format(time() - time_start))
+
+        f_tsne, ax_tsne, _, _ = fashion_scatter(tsne, labels)
+        ax_tsne.set_title('TSNE', fontsize=10)
+        f_tsne.show()
+        plt.show()
+
+        ## -- drawing the full images on TSNE
+        f_tsne2 = tile_scatter(tsne, labels, input_data)
+        f_tsne2.show()
+        plt.show()
+        return
+
+class HierarchicalClustering():
+    '''
+    HierarchicalClustering Algorithm
+    Deduces the cut-off distance from the dendogram = median distances + 2 * std of distances
+    The algorithm suggests the number of clusters based on the cut-off distance
+    '''
+    def fancy_dendrogram(self, *args, **kwargs):
+        '''
+        Apply some fancy visualizations on the dendrogram of the hierarchical clustering
+        :param args:
+        :param kwargs:
+        :return:
+        '''
+        max_d = kwargs.pop('max_d', None)
+        if max_d and 'color_threshold' not in kwargs:
+            kwargs['color_threshold'] = max_d
+        annotate_above = kwargs.pop('annotate_above', 0)
+
+        ddata = dendrogram(*args, **kwargs)
+
+        if not kwargs.get('no_plot', False):
+            plt.title('Hierarchical Clustering Dendrogram (truncated)')
+            plt.xlabel('sample index or (cluster size)')
+            plt.ylabel('distance')
+            for i, d, c in zip(ddata['icoord'], ddata['dcoord'], ddata['color_list']):
+                x = 0.5 * sum(i[1:3])
+                y = d[1]
+                if y > annotate_above:
+                    plt.plot(x, y, 'o', c=c)
+                    plt.annotate("%.3g" % y, (x, y), xytext=(0, -5),
+                                 textcoords='offset points',
+                                 va='top', ha='center')
+            if max_d:
+                plt.axhline(y=max_d, c='k')
+        return ddata
+
+    def draw_dendogram(self, X):
+        '''
+        Draw the dendogram
+        :param X: the dataset
+        :return: clusters an array showing each object cluster
+        '''
+        # generate the linkage matrix
+        Z = linkage(X, 'ward')
+        c, coph_dists = cophenet(Z, pdist(X))
+        print('c ', c)
+
+        print('Z[-4:, 2]', Z[-4:, 2])
+        print('', Z[:, 2])
+        max_d = np.median(Z[:, 2]) + 2 * np.std(Z[:, 2])
+
+        # calculate full dendrogram
+        plt.figure(figsize=(25, 10))
+        plt.title('Hierarchical Clustering Dendrogram')
+        plt.xlabel('sample index')
+        plt.ylabel('distance')
+
+        self.fancy_dendrogram(
+            Z,
+            truncate_mode='lastp',
+            p=12,
+            leaf_rotation=90.,
+            leaf_font_size=12.,
+            show_contracted=True,
+            annotate_above=0.05,  # useful in small plots so annotations don't overlap
+            max_d=max_d,  # plot a horizontal cut-off line
+        )
+        plt.title('Dendrogram')
+
+        plt.show()
+        clusters = fcluster(Z, max_d, criterion='distance')
+        n_clusters = len(np.unique(clusters))
+        print(np.unique(clusters))
+        print('Number of estimated clusters from max_d: ', n_clusters)
+        clusters = [x - 1 for x in clusters]
+        np_clusters = np.asarray(clusters)
+        print(type(np_clusters))
+        print(np_clusters)
+
+
+
+
+
+        return np_clusters
 
 

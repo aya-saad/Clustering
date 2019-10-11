@@ -48,7 +48,7 @@ class Descriptor:
         fd, hog = feature.hog(self.image, orientations=9, pixels_per_cell=(3, 3),
                                           cells_per_block=(2, 2), transform_sqrt=True, block_norm="L1",
                                           visualize=True)
-        return self.image, fd, hog
+        return self.image, hog, fd
 
     def _alg_orb(self):
         print('Extracting ORB decriptors for image ...')

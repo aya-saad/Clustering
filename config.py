@@ -30,10 +30,6 @@ mode_arg.add_argument('--num_dimensions', type=int, default=2,
                             help='# of tsne dimensions. Can be 2 or 3.')
 mode_arg.add_argument('--shuffle', type=str2bool, default=True,
                             help='Whether to shuffle the data before embedding.')
-mode_arg.add_argument('--compute_embeddings', type=str2bool, default=True,
-                            help='Whether to compute embeddings. Do this once per sample size.')
-mode_arg.add_argument('--with_images', type=str2bool, default=True,
-                            help='Whether to overlay images on data points. Only works with 2D plots.')
 mode_arg.add_argument('--random_seed', type=int, default=42,
                         help='Seed to ensure reproducibility')
 
