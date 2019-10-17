@@ -11,6 +11,9 @@
 
 import cv2
 from skimage import feature
+#import scipy.spatial.distance as ssd
+# convert the redundant n*n square matrix form into a condensed nC2 array
+#distArray = ssd.squareform(distMatrix) # distArray[{n choose 2}-{n-i choose 2} + (j-i-1)] is the distance between points i and j
 
 class Descriptor:
 
@@ -153,3 +156,62 @@ class Descriptor:
           #for d in desc:
           #  print(d)
         return img, kp, desc
+
+
+class Matcher:
+    def match_images(self):
+        pass
+    pass
+
+class BFMatcher(Matcher):
+    #def match_images(self, img_a, img_b, kp_a, kp_b, desc_a, desc_b):
+    def match_images(self, desc_a, desc_b):
+        # initialize the bruteforce matcher
+        # bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+        bf = cv2.BFMatcher(cv2.NORM_L1, crossCheck=True)
+
+        # match.distance is a float between {0:100} - lower means more similar
+        matches = bf.match(desc_a, desc_b)
+        matches = sorted(matches, key=lambda x: x.distance)
+        #matching_result = cv2.drawMatches(img_a, kp_a, img_b, kp_b, matches[:50], None, flags=2)
+        #cv2.imshow('Matching results ', matching_result)
+        similar_regions = [i for i in matches if i.distance < 70]
+        if len(matches) == 0:
+            return -1
+        regions = []
+        for m in matches:
+            regions.append(m.distance)
+        return sum(regions)/len(matches) #len(similar_regions) / len(matches)
+
+
+class FlannMatcher(Matcher):
+    def match_images(self, img_a, img_b, kp_a, kp_b, desc_a, desc_b):
+        # FLANN parameters
+        FLANN_INDEX_KDTREE = 0
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        search_params = dict(checks=50)  # or pass empty dictionary
+
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+        matches = flann.knnMatch(desc_a, desc_b, k=2)
+
+        # Need to draw only good matches, so create a mask
+        matchesMask = [[0, 0] for i in range(len(matches))]
+
+        # ratio test as per Lowe's paper
+        for i, (m, n) in enumerate(matches):
+            if m.distance < 0.7 * n.distance:
+                matchesMask[i] = [1, 0]
+
+        draw_params = dict(matchColor=(0, 255, 0),
+                           singlePointColor=(255, 0, 0),
+                           matchesMask=matchesMask,
+                           flags=0)
+        similar_regions = [1 for i, (m, n) in enumerate(matches) if m.distance < 0.7 * n.distance]
+        for i, (m, n) in enumerate(matches):
+            print('m.distance: ', m.distance)
+            print('0.7 * n.distance: ', 0.7 * n.distance)
+            print('n.distance: ', n.distance)
+        #matching_result = cv2.drawMatchesKnn(img_a, kp_a, img_b, kp_b, matches, None, **draw_params)
+        print('similar_regions: ', similar_regions)
+        return (len(similar_regions) / len(matches))

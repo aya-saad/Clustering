@@ -165,7 +165,7 @@ class PrincipleComponentAnalysis():
 
 
 class TSNEAlgo():
-    def tsne_fit(self, X, input_data, labels):
+    def tsne_fit(self, X, input_data, labels, title='TSNE'):
         x = StandardScaler().fit_transform(X)
         time_start = time()
         RS = 123
@@ -174,13 +174,14 @@ class TSNEAlgo():
         print('-- TSNE DONE! Time elapsed: {} seconds'.format(time() - time_start))
 
         f_tsne, ax_tsne, _, _ = fashion_scatter(tsne, labels)
-        ax_tsne.set_title('TSNE', fontsize=10)
-        f_tsne.show()
+        ax_tsne.set_title(title, fontsize=10)
+        #f_tsne.show()
         plt.show()
 
         ## -- drawing the full images on TSNE
         f_tsne2 = tile_scatter(tsne, labels, input_data)
-        f_tsne2.show()
+        plt.title(title)
+        #f_tsne2.show()
         plt.show()
         return
 
@@ -197,6 +198,7 @@ class HierarchicalClustering():
         :param kwargs:
         :return:
         '''
+        title = kwargs.pop('title', None)
         max_d = kwargs.pop('max_d', None)
         if max_d and 'color_threshold' not in kwargs:
             kwargs['color_threshold'] = max_d
@@ -205,7 +207,7 @@ class HierarchicalClustering():
         ddata = dendrogram(*args, **kwargs)
 
         if not kwargs.get('no_plot', False):
-            plt.title('Hierarchical Clustering Dendrogram (truncated)')
+            plt.title(title)
             plt.xlabel('sample index or (cluster size)')
             plt.ylabel('distance')
             for i, d, c in zip(ddata['icoord'], ddata['dcoord'], ddata['color_list']):
@@ -220,7 +222,7 @@ class HierarchicalClustering():
                 plt.axhline(y=max_d, c='k')
         return ddata
 
-    def draw_dendogram(self, X):
+    def draw_dendogram(self, X, title='Hierarchical Clustering Dendrogram'):
         '''
         Draw the dendogram
         :param X: the dataset
@@ -228,8 +230,8 @@ class HierarchicalClustering():
         '''
         # generate the linkage matrix
         Z = linkage(X, 'ward')
-        c, coph_dists = cophenet(Z, pdist(X))
-        print('c ', c)
+        #c, coph_dists = cophenet(Z, pdist(X))
+        #print('c ', c)
 
         print('Z[-4:, 2]', Z[-4:, 2])
         print('', Z[:, 2])
@@ -237,7 +239,7 @@ class HierarchicalClustering():
 
         # calculate full dendrogram
         plt.figure(figsize=(25, 10))
-        plt.title('Hierarchical Clustering Dendrogram')
+        plt.title(title)
         plt.xlabel('sample index')
         plt.ylabel('distance')
 
@@ -250,9 +252,8 @@ class HierarchicalClustering():
             show_contracted=True,
             annotate_above=0.05,  # useful in small plots so annotations don't overlap
             max_d=max_d,  # plot a horizontal cut-off line
+            title=title
         )
-        plt.title('Dendrogram')
-
         plt.show()
         clusters = fcluster(Z, max_d, criterion='distance')
         n_clusters = len(np.unique(clusters))
